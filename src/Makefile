@@ -2,28 +2,36 @@ CC = gcc
 FLAGS = -g -Wall
 MEDIATOR = mediator
 PLAYER = player
-MAP = map.txt
-STATUS = status.txt
-COMMANDS = commands.txt
+MAP = map
+
+MAP_FILENAME = map.txt
+STATUS_FILENAME = status.txt
+COMMANDS_FILENAME = commands.txt
 TIME_LIMIT = 60
 
-all: $(MEDIATOR).out $(PLAYER).out
+build: $(MEDIATOR).out $(PLAYER).out
 
-$(MEDIATOR).out: $(MEDIATOR).o
+$(MEDIATOR).out: $(MEDIATOR).o $(MAP).o
 	$(CC) $(FLAGS) $^ -o $@
 
-$(MEDIATOR).o: $(MEDIATOR).c
+$(MEDIATOR).o: $(MEDIATOR).c 
 	$(CC) $(FLAGS) -c $^ -o $@
 
-$(PLAYER).out: $(PLAYER).o
+$(PLAYER).out: $(PLAYER).o $(MAP).o
 	$(CC) $(FLAGS) $^ -o $@
 
 $(PLAYER).o: $(PLAYER).c
 	$(CC) $(FLAGS) -c $^ -o $@
 
+$(MAP).o: $(MAP).c
+	$(CC) $(FLAGS) -c $^ -o $@
 
-test:
-	./$(MEDIATOR).out $(MAP) $(STATUS) $(COMMANDS) $(TIME_LIMIT)
+test: $(MEDIATOR).out
+	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
+
+memcheck: $(MEDIATOR).out
+	valgrind --leak-check=yes --track-origins=yes \
+	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
 
 clean:
-	rm -f $(MEDIATOR).o  $(MEDIATOR).out $(PLAYER).o $(PLAYER).out
+	rm -f *.o  *.out

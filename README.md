@@ -8,3 +8,4 @@ src -> Directory containing full source of an apllication
 ## What has been done
 
 - Project setup
+- Map loading
