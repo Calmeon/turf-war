@@ -1,20 +1,17 @@
-/*
-Player program representing game player
-*/
+// Player program representing game player
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "map.h"
-#include <stdlib.h>
-#include <stdio.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int time_limit;
     char *map_filename, *status_filename, *commands_filename;
     Map board;
 
     // Get passed arguments
-    if (argc < 4)
-    {
+    if (argc < 4) {
         printf("Usage: ./<program_name> map.txt status.txt commands.txt [time_limit]\n");
         exit(EXIT_FAILURE);
     }
@@ -26,9 +23,9 @@ int main(int argc, char *argv[])
     printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %d\n\n",
            map_filename, status_filename, commands_filename, time_limit);
 
-    loadMap(&board, map_filename);
-    printMap(&board);
+    load_map(&board, map_filename);
+    print_map(&board);
 
-    freeMap(&board);
+    free_map(&board);
     return 0;
 }
