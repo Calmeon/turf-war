@@ -25,23 +25,58 @@ void set_player(Player *player, int base_x, int base_y) {
     player->base.durability = 200;
     player->base.x = base_x;
     player->base.y = base_y;
+    player->base.creating = '0';
 }
 
 // Set players structs starting game
-void set_players(Player *player1, Player *player2, Map *board) {
+void set_players(Player *p1, Player *p2, Map *board) {
     for (int r = 0; r < board->no_rows; r++) {
         for (int c = 0; c < board->no_cols; c++) {
             if (board->board_matrix[r][c] == '1') {
-                set_player(player1, c, r);
+                set_player(p1, c, r);
             } else if (board->board_matrix[r][c] == '2') {
-                set_player(player2, c, r);
+                set_player(p2, c, r);
             }
         }
     }
 }
 
+void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
+    FILE *file = fopen(filename, "w");
+    Player *player, *enemy;
+    if (file == NULL) {
+        perror("Failed to open status file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set player and enemy
+    if (turn % 2 != 0) {
+        // Player 1 turn
+        player = p1;
+        enemy = p2;
+    } else {
+        // Player 2 turn
+        player = p2;
+        enemy = p1;
+    }
+
+    // Gold
+    fprintf(file, "%d\n", player->gold);
+    // Player base
+    fprintf(file, "P B %d %d %d %d %c\n",
+            player->base.id, player->base.x, player->base.y, player->base.durability, player->base.creating);
+    // Enemy base
+    fprintf(file, "E B %d %d %d %d %c\n",
+            enemy->base.id, enemy->base.x, enemy->base.y, enemy->base.durability, enemy->base.creating);
+    // Player units
+
+    // Enemy units
+
+    fclose(file);
+}
+
 int main(int argc, char *argv[]) {
-    int time_limit, status, running;
+    int time_limit, status, running, turn;
     char *map_filename, *status_filename, *commands_filename, program[strlen(PLAYER_PROGRAM) + 6];
     Map board;
     Player player1, player2;
@@ -64,6 +99,8 @@ int main(int argc, char *argv[]) {
     // Prepare data
     load_map(&board, map_filename);
     set_players(&player1, &player2, &board);
+    turn = 1;
+    prepare_status(&player1, &player2, turn++, status_filename);
 
     // Prepare for executing player program
     sprintf(program, "./%s.out", PLAYER_PROGRAM);
@@ -72,7 +109,7 @@ int main(int argc, char *argv[]) {
     while (running) {
         // Fork a new process
         if ((pid = fork()) < 0) {
-            printf("Failed to fork\n");
+            perror("Failed to fork");
             exit(EXIT_FAILURE);
         } else if (pid == 0) {
             // Child process (player program)
@@ -80,7 +117,7 @@ int main(int argc, char *argv[]) {
             // Execute the player program
             execvp(program, args);
 
-            perror("Failed to execute the player program\n");
+            perror("Failed to execute the player program");
             exit(EXIT_FAILURE);
         } else {
             // Parent process (mediator program)
@@ -94,6 +131,9 @@ int main(int argc, char *argv[]) {
              * Check ending conditions
              * Process and validate commands
              */
+
+            // Prepare status file for player
+            prepare_status(&player1, &player2, turn++, status_filename);
 
             running = 0;
         }

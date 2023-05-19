@@ -9,3 +9,6 @@ src -> Directory containing full source of an apllication
 
 - Project setup
 - Map loading
+- Setting up players data
+- Base of mediator
+- Basic status preparation

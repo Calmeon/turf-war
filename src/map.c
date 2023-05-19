@@ -13,7 +13,7 @@ void load_map(Map *board, char *filename) {
     FILE *file;
 
     if ((file = fopen(filename, "r")) == NULL) {
-        printf("Failed to open the file.\n");
+        perror("Failed to open map file");
         exit(EXIT_FAILURE);
     }
 
@@ -38,7 +38,7 @@ void load_map(Map *board, char *filename) {
         // Allocate map column
         board->board_matrix[r] = malloc((board->no_cols + 1) * sizeof(char));
         if (fgets(buffer, board->no_cols + 2, file) == NULL) {
-            printf("Error reading map data.\n");
+            perror("Error reading map data");
             exit(EXIT_FAILURE);
         }
         memcpy(board->board_matrix[r], buffer, board->no_cols + 1);

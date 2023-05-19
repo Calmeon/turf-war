@@ -34,4 +34,4 @@ memcheck: $(MEDIATOR).out
 	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
 
 clean:
-	rm -f *.o  *.out
+	rm -f *.o  *.out $(STATUS_FILENAME) $(COMMANDS_FILENAME)

@@ -4,6 +4,7 @@
 // Struct describing player base
 typedef struct {
     int id, x, y, durability;
+    char creating;
 } Base;
 
 #endif
