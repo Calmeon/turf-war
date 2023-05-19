@@ -2,6 +2,11 @@
 
 #include "units.h"
 
+Base base(int id, int x, int y, int durability, char building) {
+    Base b = {.id = id, .x = x, .y = y, .durability = durability, .building = building};
+    return b;
+}
+
 Unit knight(int id, int x, int y) {
     Unit k = {.id = id, .x = x, .y = y, .type = 'K', .durability = 70, .speed = 5, .price = 400, .range = 1, .build_time = 5};
     return k;

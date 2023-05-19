@@ -22,13 +22,9 @@ int id = 0;
 // Set default parameters for player and set position of the base
 void set_player(Player *player, int base_x, int base_y) {
     player->gold = 2000;
-    player->base.id = id++;
-    player->base.durability = 200;
-    player->base.x = base_x;
-    player->base.y = base_y;
-    player->base.building = '0';
     player->no_units = 0;
     player->units = NULL;
+    player->base = base(id++, base_x, base_y, 200, '0');
 }
 
 // Set players structs starting game
@@ -82,7 +78,7 @@ void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
     }
     // Enemy units
     for (int u = 0; u < enemy->no_units; u++) {
-        fprintf(file, "P %c %d %d %d %d\n",
+        fprintf(file, "E %c %d %d %d %d\n",
                 enemy->units[u].type, enemy->units[u].id, enemy->units[u].x,
                 enemy->units[u].y, enemy->units[u].durability);
     }
@@ -107,13 +103,16 @@ int main(int argc, char *argv[]) {
     commands_filename = argv[3];
     time_limit = (argc == 5) ? argv[4] : "5";
 
-    printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %s\n\n",
+    printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %s\n",
            map_filename, status_filename, commands_filename, time_limit);
 
     // Prepare data
     load_map(&board, map_filename);
     set_players(&player1, &player2, &board);
     turn = 1;
+    add_unit(&player1, knight(id++, 31, 4));
+    add_unit(&player1, swordsman(id++, 30, 2));
+    add_unit(&player2, archer(id++, 2, 3));
     prepare_status(&player1, &player2, turn++, status_filename);
 
     // Prepare for executing player program
@@ -138,7 +137,10 @@ int main(int argc, char *argv[]) {
 
             // Wait for the child process to terminate
             waitpid(pid, &status, 0);
-
+            if (status) {
+                perror("Player process error");
+                exit(EXIT_FAILURE);
+            }
             /*
              * TODO:
              * Check if in time limit
@@ -146,7 +148,6 @@ int main(int argc, char *argv[]) {
              * Process and validate commands
              */
 
-            add_unit(&player2, knight(id++, 31, 4));
             // Prepare status file for player
             prepare_status(&player1, &player2, turn++, status_filename);
 
@@ -154,6 +155,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Free allocated memory
     free_map(&board);
     free_player(&player1);
     free_player(&player2);

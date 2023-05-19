@@ -15,6 +15,7 @@ typedef struct {
 
 // Constructors for different units
 
+Base base(int id, int x, int y, int durability, char building);
 Unit knight(int id, int x, int y);
 Unit swordsman(int id, int x, int y);
 Unit archer(int id, int x, int y);

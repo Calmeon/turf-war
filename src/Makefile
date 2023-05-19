@@ -34,8 +34,11 @@ $(GAME).o: $(GAME).c
 $(UNITS).o: $(UNITS).c
 	$(CC) $(FLAGS) -c $^ -o $@
 
-test: $(MEDIATOR).out
+test: $(MEDIATOR).out $(PLAYER).out
 	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
+
+player: $(PLAYER).out
+	./$(PLAYER).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
 
 memcheck: $(MEDIATOR).out
 	valgrind --leak-check=yes --track-origins=yes \

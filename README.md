@@ -13,3 +13,4 @@ src -> Directory containing full source of an apllication
 - Base of mediator
 - Basic status preparation
 - Unit constructors and adding system
+- Player status loading into memory
