@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "game.h"
 #include "map.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     int time_limit;
     char *map_filename, *status_filename, *commands_filename;
     Map board;

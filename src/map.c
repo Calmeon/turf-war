@@ -34,16 +34,16 @@ void load_map(Map *board, char *filename) {
 
     // Allocate map rows
     board->board_matrix = malloc(board->no_rows * sizeof(char *));
-    for (int i = 0; i < board->no_rows; i++) {
+    for (int r = 0; r < board->no_rows; r++) {
         // Allocate map column
-        board->board_matrix[i] = malloc((board->no_cols + 1) * sizeof(char));
+        board->board_matrix[r] = malloc((board->no_cols + 1) * sizeof(char));
         if (fgets(buffer, board->no_cols + 2, file) == NULL) {
             printf("Error reading map data.\n");
             exit(EXIT_FAILURE);
         }
-        memcpy(board->board_matrix[i], buffer, board->no_cols + 1);
+        memcpy(board->board_matrix[r], buffer, board->no_cols + 1);
         // Null-terminate the string
-        board->board_matrix[i][board->no_cols] = '\0';
+        board->board_matrix[r][board->no_cols] = '\0';
     }
 
     fclose(file);
