@@ -12,6 +12,7 @@
 
 #include "game.h"
 #include "map.h"
+#include "units.h"
 
 #define PLAYER_PROGRAM "player"
 
@@ -25,7 +26,9 @@ void set_player(Player *player, int base_x, int base_y) {
     player->base.durability = 200;
     player->base.x = base_x;
     player->base.y = base_y;
-    player->base.creating = '0';
+    player->base.building = '0';
+    player->no_units = 0;
+    player->units = NULL;
 }
 
 // Set players structs starting game
@@ -41,6 +44,7 @@ void set_players(Player *p1, Player *p2, Map *board) {
     }
 }
 
+// Prepare status file based on data
 void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
     FILE *file = fopen(filename, "w");
     Player *player, *enemy;
@@ -64,20 +68,31 @@ void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
     fprintf(file, "%d\n", player->gold);
     // Player base
     fprintf(file, "P B %d %d %d %d %c\n",
-            player->base.id, player->base.x, player->base.y, player->base.durability, player->base.creating);
+            player->base.id, player->base.x, player->base.y,
+            player->base.durability, player->base.building);
     // Enemy base
     fprintf(file, "E B %d %d %d %d %c\n",
-            enemy->base.id, enemy->base.x, enemy->base.y, enemy->base.durability, enemy->base.creating);
+            enemy->base.id, enemy->base.x, enemy->base.y,
+            enemy->base.durability, enemy->base.building);
     // Player units
-
+    for (int u = 0; u < player->no_units; u++) {
+        fprintf(file, "P %c %d %d %d %d\n",
+                player->units[u].type, player->units[u].id, player->units[u].x,
+                player->units[u].y, player->units[u].durability);
+    }
     // Enemy units
+    for (int u = 0; u < enemy->no_units; u++) {
+        fprintf(file, "P %c %d %d %d %d\n",
+                enemy->units[u].type, enemy->units[u].id, enemy->units[u].x,
+                enemy->units[u].y, enemy->units[u].durability);
+    }
 
     fclose(file);
 }
 
 int main(int argc, char *argv[]) {
-    int time_limit, status, running, turn;
-    char *map_filename, *status_filename, *commands_filename, program[strlen(PLAYER_PROGRAM) + 6];
+    int status, running, turn;
+    char *map_filename, *status_filename, *commands_filename, *time_limit, program[strlen(PLAYER_PROGRAM) + 6];
     Map board;
     Player player1, player2;
     pid_t pid;
@@ -87,13 +102,12 @@ int main(int argc, char *argv[]) {
         printf("Usage: ./<program_name> map.txt status.txt commands.txt [time_limit]\n");
         exit(EXIT_FAILURE);
     }
-    printf("%s", argv[0]);
     map_filename = argv[1];
     status_filename = argv[2];
     commands_filename = argv[3];
-    time_limit = (argc == 5) ? atoi(argv[4]) : 5;
+    time_limit = (argc == 5) ? argv[4] : "5";
 
-    printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %d\n\n",
+    printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %s\n\n",
            map_filename, status_filename, commands_filename, time_limit);
 
     // Prepare data
@@ -104,7 +118,7 @@ int main(int argc, char *argv[]) {
 
     // Prepare for executing player program
     sprintf(program, "./%s.out", PLAYER_PROGRAM);
-    char *args[] = {PLAYER_PROGRAM, map_filename, status_filename, commands_filename, NULL};
+    char *args[] = {PLAYER_PROGRAM, map_filename, status_filename, commands_filename, time_limit, NULL};
     running = 1;
     while (running) {
         // Fork a new process
@@ -132,6 +146,7 @@ int main(int argc, char *argv[]) {
              * Process and validate commands
              */
 
+            add_unit(&player2, knight(id++, 31, 4));
             // Prepare status file for player
             prepare_status(&player1, &player2, turn++, status_filename);
 
@@ -140,5 +155,7 @@ int main(int argc, char *argv[]) {
     }
 
     free_map(&board);
+    free_player(&player1);
+    free_player(&player2);
     return 0;
 }

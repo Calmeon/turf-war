@@ -12,3 +12,4 @@ src -> Directory containing full source of an apllication
 - Setting up players data
 - Base of mediator
 - Basic status preparation
+- Unit constructors and adding system

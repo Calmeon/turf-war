@@ -5,8 +5,12 @@
 
 // Player structure
 typedef struct {
-    int gold;
+    int gold, no_units;
     Base base;
+    Unit *units;
 } Player;
+
+void add_unit(Player *p, Unit u);
+void free_player(Player *p);
 
 #endif
