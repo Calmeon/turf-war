@@ -8,7 +8,7 @@ UNITS = units
 
 MAP_FILENAME = map.txt
 STATUS_FILENAME = status.txt
-COMMANDS_FILENAME = commands.txt
+ORDERS_FILENAME = orders.txt
 TIME_LIMIT = 60
 
 build: $(MEDIATOR).out $(PLAYER).out
@@ -35,14 +35,14 @@ $(UNITS).o: $(UNITS).c
 	$(CC) $(FLAGS) -c $^ -o $@
 
 test: $(MEDIATOR).out $(PLAYER).out
-	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
+	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(ORDERS_FILENAME) $(TIME_LIMIT)
 
 player: $(PLAYER).out
-	./$(PLAYER).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
+	./$(PLAYER).out $(MAP_FILENAME) $(STATUS_FILENAME) $(ORDERS_FILENAME) $(TIME_LIMIT)
 
 memcheck: $(MEDIATOR).out
 	valgrind --leak-check=yes --track-origins=yes \
-	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(COMMANDS_FILENAME) $(TIME_LIMIT)
+	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(ORDERS_FILENAME) $(TIME_LIMIT)
 
 clean:
-	rm -f *.o  *.out $(STATUS_FILENAME) $(COMMANDS_FILENAME)
+	rm -f *.o  *.out $(STATUS_FILENAME) $(ORDERS_FILENAME)

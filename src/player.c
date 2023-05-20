@@ -25,8 +25,7 @@ void load_unit(char *tokens[], Player *player, Player *enemy) {
     Player *actual_player;
     Unit u;
     int id, x, y, durability;
-    char building;
-    char type = tokens[1][0];
+    char type = *tokens[1];
 
     // Check whose unit is this
     actual_player = (strcmp(tokens[0], "P") == 0) ? player : enemy;
@@ -40,8 +39,7 @@ void load_unit(char *tokens[], Player *player, Player *enemy) {
     // Check type of unit and create it
     switch (type) {
         case 'B':
-            building = tokens[6][0];
-            player->base = base(id, x, y, durability, building);
+            player->base = base(id, x, y, durability, *tokens[6]);
             return;
         case 'K':
             u = knight(id, x, y);
@@ -104,30 +102,48 @@ void load_status(char *status_filename, Player *player, Player *enemy) {
     fclose(file);
 }
 
+// Given all data prepare orders.txt file with moves
+void give_orders(char *orders_filename, Player player, Player enemy, Map board) {
+    FILE *file;
+    if ((file = fopen(orders_filename, "w")) == NULL) {
+        perror("Failed to open orders file");
+        exit(EXIT_FAILURE);
+    }
+
+    // TODO: Using some strategy decide on orders
+    fprintf(file, "%d B A\n", player.base.id);
+    fprintf(file, "3 M 29 3\n");
+
+    fclose(file);
+}
+
 int main(int argc, char *argv[]) {
     int time_limit;
-    char *map_filename, *status_filename, *commands_filename;
+    char *map_filename, *status_filename, *orders_filename;
     Map board;
     Player player, enemy;
 
     // Get passed arguments
     if (argc < 4) {
-        printf("Usage: ./<program_name> map.txt status.txt commands.txt [time_limit]\n");
+        printf("Usage: ./<program_name> map.txt status.txt orders.txt [time_limit]\n");
         exit(EXIT_FAILURE);
     }
     map_filename = argv[1];
     status_filename = argv[2];
-    commands_filename = argv[3];
+    orders_filename = argv[3];
     time_limit = (argc == 5) ? atoi(argv[4]) : 5;
 
-    printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %d\n",
-           map_filename, status_filename, commands_filename, time_limit);
+    printf("Map file: %s   Status file: %s   Orders file: %s   Time limit: %d\n",
+           map_filename, status_filename, orders_filename, time_limit);
 
     // Load data
     load_map(&board, map_filename);
     // print_map(&board);
     set_players(&player, &enemy);
     load_status(status_filename, &player, &enemy);
+
+    // Given game data give orders accordingly
+    give_orders(orders_filename, player, enemy, board);
 
     // Free allocated memory
     free_player(&player);

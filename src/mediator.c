@@ -42,9 +42,9 @@ void set_players(Player *p1, Player *p2, Map *board) {
 
 // Prepare status file based on data
 void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
-    FILE *file = fopen(filename, "w");
+    FILE *file;
     Player *player, *enemy;
-    if (file == NULL) {
+    if ((file = fopen(filename, "w")) == NULL) {
         perror("Failed to open status file");
         exit(EXIT_FAILURE);
     }
@@ -52,10 +52,12 @@ void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
     // Set player and enemy
     if (turn % 2 != 0) {
         // Player 1 turn
+        printf("Player 1 turn\n");
         player = p1;
         enemy = p2;
     } else {
         // Player 2 turn
+        printf("Player 2 turn\n");
         player = p2;
         enemy = p1;
     }
@@ -86,25 +88,93 @@ void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
     fclose(file);
 }
 
+// Build action
+void build(Player *player, char type) {}
+
+// Move action
+void move(Player *player, Player *enemy, Map board, int id, int x, int y) {}
+
+// Attack action
+void attack(Player *player, Player *enemy, int id, int id_enemy) {}
+
+// Process single order
+void process_order(Player *player, Player *enemy, Map board, char *tokens[]) {
+    int id, x, y, id_enemy;
+    char action, type;
+
+    // Parse variables
+    id = atoi(tokens[0]);
+    action = *tokens[1];
+
+    switch (action) {
+        case 'B':
+            type = *tokens[2];
+            build(player, type);
+            break;
+        case 'M':
+            x = atoi(tokens[2]);
+            y = atoi(tokens[3]);
+            move(player, enemy, board, id, x, y);
+            break;
+        case 'A':
+            id_enemy = atoi(tokens[2]);
+            attack(player, enemy, id, id_enemy);
+            break;
+        default:
+            break;
+    }
+}
+
+// Process orders given by player in orders.txt file
+void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_filename) {
+    FILE *file;
+    char buffer[128], *token, *tokens[4];
+    Player *player, *enemy;
+    int i;
+
+    if ((file = fopen(orders_filename, "r")) == NULL) {
+        perror("Failed to open status file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set player and enemy
+    player = (turn % 2 != 0) ? p1 : p2;
+    enemy = (turn % 2 != 0) ? p2 : p1;
+
+    // Iterate through lines of status file
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        i = 0;
+        // Use strtok to get individual tokens
+        token = strtok(buffer, " \n");
+        while (token != NULL) {
+            tokens[i++] = token;
+            token = strtok(NULL, " \n");
+        }
+        process_order(player, enemy, board, tokens);
+    }
+
+    fclose(file);
+}
+
 int main(int argc, char *argv[]) {
     int status, running, turn;
-    char *map_filename, *status_filename, *commands_filename, *time_limit, program[strlen(PLAYER_PROGRAM) + 6];
+    char *map_filename, *status_filename, *orders_filename, *time_limit, program[strlen(PLAYER_PROGRAM) + 6];
     Map board;
     Player player1, player2;
     pid_t pid;
 
     // Get passed arguments
     if (argc < 4) {
-        printf("Usage: ./<program_name> map.txt status.txt commands.txt [time_limit]\n");
+        printf("Usage: ./<program_name> map.txt status.txt orders.txt [time_limit]\n");
         exit(EXIT_FAILURE);
     }
     map_filename = argv[1];
     status_filename = argv[2];
-    commands_filename = argv[3];
+    orders_filename = argv[3];
     time_limit = (argc == 5) ? argv[4] : "5";
 
-    printf("Map file: %s   Status file: %s   Commands file: %s   Time limit: %s\n",
-           map_filename, status_filename, commands_filename, time_limit);
+    printf("Map file: %s   Status file: %s   Orders file: %s   Time limit: %s\n",
+           map_filename, status_filename, orders_filename, time_limit);
 
     // Prepare data
     load_map(&board, map_filename);
@@ -113,11 +183,11 @@ int main(int argc, char *argv[]) {
     add_unit(&player1, knight(id++, 31, 4));
     add_unit(&player1, swordsman(id++, 30, 2));
     add_unit(&player2, archer(id++, 2, 3));
-    prepare_status(&player1, &player2, turn++, status_filename);
+    prepare_status(&player1, &player2, turn, status_filename);
 
     // Prepare for executing player program
     sprintf(program, "./%s.out", PLAYER_PROGRAM);
-    char *args[] = {PLAYER_PROGRAM, map_filename, status_filename, commands_filename, time_limit, NULL};
+    char *args[] = {PLAYER_PROGRAM, map_filename, status_filename, orders_filename, time_limit, NULL};
     running = 1;
     while (running) {
         // Fork a new process
@@ -137,19 +207,20 @@ int main(int argc, char *argv[]) {
 
             // Wait for the child process to terminate
             waitpid(pid, &status, 0);
-            if (status) {
-                perror("Player process error");
+            if (WIFSIGNALED(status)) {
+                printf("Player process error\n");
                 exit(EXIT_FAILURE);
             }
             /*
              * TODO:
              * Check if in time limit
-             * Check ending conditions
              * Process and validate commands
+             * Check ending conditions
              */
+            process_orders(&player1, &player2, board, turn, orders_filename);
 
             // Prepare status file for player
-            prepare_status(&player1, &player2, turn++, status_filename);
+            // prepare_status(&player1, &player2, ++turn, status_filename);
 
             running = 0;
         }
