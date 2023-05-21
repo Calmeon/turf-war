@@ -14,3 +14,8 @@ src -> Directory containing full source of an apllication
 - Basic status preparation
 - Unit constructors and adding system
 - Player status loading into memory
+- Orders file communication
+- Handle orders
+    - Build
+    - Move
+    - Attack
