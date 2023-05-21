@@ -69,14 +69,14 @@ int get_damage(char attacking, char attacked) {
     int attackerIdx, attackedIdx;
     // Damage table for units
     int damage_table[7][8] = {
-        // Attacker 0  Attacker 1  Attacker 2  Attacker 3  Attacker 4  Attacker 5  Attacker 6  Attacker 7
-        {35, 35, 35, 35, 35, 50, 35, 35},  // Target 0
-        {30, 30, 30, 20, 20, 30, 30, 30},  // Target 1
-        {15, 15, 15, 15, 10, 10, 15, 15},  // Target 2
-        {35, 15, 15, 15, 15, 10, 15, 10},  // Target 3
-        {40, 40, 40, 40, 40, 40, 40, 50},  // Target 4
-        {10, 10, 10, 10, 10, 10, 10, 50},  // Target 5
-        {5, 5, 5, 5, 5, 5, 5, 1}           // Target 6
+        // K S  A   P   C   R   W   B
+        {35, 35, 35, 35, 35, 50, 35, 35},  // K
+        {30, 30, 30, 20, 20, 30, 30, 30},  // S
+        {15, 15, 15, 15, 10, 10, 15, 15},  // A
+        {35, 15, 15, 15, 15, 10, 15, 10},  // P
+        {40, 40, 40, 40, 40, 40, 40, 50},  // C
+        {10, 10, 10, 10, 10, 10, 10, 50},  // R
+        {5, 5, 5, 5, 5, 5, 5, 1}           // W
     };
 
     attackerIdx = get_dmg_table_idx(attacking);

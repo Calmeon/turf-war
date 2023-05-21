@@ -19,3 +19,6 @@ src -> Directory containing full source of an apllication
     - Build
     - Move
     - Attack
+- Handle game ending
+    - By exceeding time limit
+    - By base destruction

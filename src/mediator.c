@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "game.h"
@@ -15,6 +16,7 @@
 #include "units.h"
 
 #define PLAYER_PROGRAM "player"
+#define MAX_TURNS 2000
 
 // Global id parameter to keep track on id given
 int id = 0;
@@ -260,12 +262,26 @@ void process_turn(Player *player1, Player *player2, Map board, int turn) {
      */
 }
 
+// Check result of the game
+void end_game() {
+}
+
+// Check if enemy base is destroyed
+int player_won(Player *p1, Player *p2, int turn) {
+    Player *player, *enemy;
+    // Set who is player and enemy
+    set_players_roles(&p1, &p2, &player, &enemy, turn);
+    return (enemy->base.durability <= 0) ? 1 : 0;
+}
+
 int main(int argc, char *argv[]) {
-    int status, running, turn;
-    char *map_filename, *status_filename, *orders_filename, *time_limit, program[strlen(PLAYER_PROGRAM) + 6];
+    int status, turn, player_num;
+    char *map_filename, *status_filename, *orders_filename, *time_limit_str, program[strlen(PLAYER_PROGRAM) + 6];
     Map board;
     Player player1, player2;
     pid_t pid;
+    struct timespec start, stop;
+    double time_taken;
 
     // Get passed arguments
     if (argc < 4) {
@@ -275,15 +291,13 @@ int main(int argc, char *argv[]) {
     map_filename = argv[1];
     status_filename = argv[2];
     orders_filename = argv[3];
-    time_limit = (argc == 5) ? argv[4] : "5";
-
-    printf("Map file: %s   Status file: %s   Orders file: %s   Time limit: %s\n",
-           map_filename, status_filename, orders_filename, time_limit);
+    time_limit_str = (argc == 5) ? argv[4] : "5";
 
     // Prepare data
     load_map(&board, map_filename);
     set_players(&player1, &player2, &board);
     turn = 1;
+    player_num = 1;
     add_unit(&player1, unit(id++, 31, 4, 'K'));
     add_unit(&player1, unit(id++, 30, 2, 'S'));
     add_unit(&player2, unit(id++, 2, 3, 'A'));
@@ -291,43 +305,59 @@ int main(int argc, char *argv[]) {
 
     // Prepare for executing player program
     sprintf(program, "./%s.out", PLAYER_PROGRAM);
-    char *args[] = {PLAYER_PROGRAM, map_filename, status_filename, orders_filename, time_limit, NULL};
-    running = 1;
-    while (running) {
+    char *args[] = {PLAYER_PROGRAM, map_filename, status_filename, orders_filename, time_limit_str, NULL};
+    while (1) {
         // Fork a new process
         if ((pid = fork()) < 0) {
             perror("Failed to fork");
             exit(EXIT_FAILURE);
         } else if (pid == 0) {
             // Child process (player program)
-
             // Execute the player program
             execvp(program, args);
-
             perror("Failed to execute the player program");
             exit(EXIT_FAILURE);
         } else {
             // Parent process (mediator program)
-
+            clock_gettime(CLOCK_REALTIME, &start);
             // Wait for the child process to terminate
             waitpid(pid, &status, 0);
             if (WIFSIGNALED(status)) {
                 printf("Player process error\n");
                 exit(EXIT_FAILURE);
             }
-            /*
-             * TODO:
-             * Check if in time limit
-             * Check ending conditions
-             */
+            clock_gettime(CLOCK_REALTIME, &stop);
+
+            // Set player number
+            player_num = (turn % 2 != 0) ? 1 : 2;
+            // Calculate the time taken by player
+            time_taken = (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec) / 1E9;
+            if (time_taken > atof(time_limit_str)) {
+                printf("Time limit exceeded.\nPlayer %d won!\n", (player_num == 1) ? 2 : 1);
+                break;
+            }
+
             // Process and validate commands
             process_orders(&player1, &player2, board, turn, orders_filename);
             // Process automatic turn actions
             process_turn(&player1, &player2, board, turn);
-            // Prepare status file for player
-            prepare_status(&player1, &player2, ++turn, status_filename);
 
-            running = 0;
+            // Check if player destroyed enemy base
+            if (player_won(&player1, &player2, turn)) {
+                printf("Player %d won by destroying enemy base!\n", player_num);
+                break;
+            }
+            // Check if turns limit is exceeded
+            ++turn;
+            if (turn > MAX_TURNS) {
+                // Game has ended so check result
+                end_game();
+                break;
+            }
+
+            // Prepare status file for player
+            prepare_status(&player1, &player2, turn, status_filename);
+            break;
         }
     }
 
