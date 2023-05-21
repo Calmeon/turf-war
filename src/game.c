@@ -16,6 +16,28 @@ void add_unit(Player *p, Unit u) {
     p->units[p->no_units - 1] = u;
 }
 
+// Delete unit from player units with proper memory reallocation
+void del_unit(Player *p, int idx) {
+    if (idx < 0 || idx >= p->no_units) {
+        printf("Invalid unit index.\n");
+        return;
+    }
+
+    // Shift units after the deleted unit to fill the gap
+    for (int i = idx; i < p->no_units - 1; i++) {
+        p->units[i] = p->units[i + 1];
+    }
+
+    p->no_units--;
+
+    if (p->no_units == 0) {
+        free(p->units);
+        p->units = NULL;
+    } else {
+        p->units = realloc(p->units, p->no_units * sizeof(Unit));
+    }
+}
+
 // Free units memory of player
 void free_player(Player *p) {
     if (p->units != NULL) {

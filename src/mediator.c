@@ -253,14 +253,60 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
     fclose(file);
 }
 
+// Process turn for one player
+void process_turn_player(Player *p, Map board) {
+    int u;
+    // Build units
+    if (p->base.building != '0') {
+        // Lower time of builidng
+        p->base.building_duration--;
+        if (p->base.building_duration == 0) {
+            // Build unit on base if time passed
+            add_unit(p, unit(id++, p->base.x, p->base.y, p->base.building));
+            p->base.building = '0';
+        }
+    }
+    // Clear destroyed units
+    u = 0;
+    while (u < p->no_units) {
+        if (p->units[u].durability < 0) {
+            del_unit(p, u);
+        } else {
+            u++;
+        }
+    }
+    // Add gold if workers on mines
+    for (int w = 0; w < p->no_units; w++) {
+        // Find worker unit
+        if (p->units[w].type == 'W') {
+            // Check if worker stays on mine and add gold if he is
+            if (board.board_matrix[p->units[w].y][p->units[w].x] == '6') {
+                p->gold += 50;
+            }
+        }
+    }
+}
+
 // Process turn changes sucha as building or gold mining
-void process_turn(Player *player1, Player *player2, Map board, int turn) {
-    /*
-     * TODO:
-     * Build units/substract time of builidng
-     * Add gold if workers on mines
-     * Reset speed of units
-     */
+void process_turn(Player *p1, Player *p2, Map board, int turn) {
+    Player *player, *enemy;
+    Unit def_unit;
+
+    // Set who is player and enemy
+    set_players_roles(&p1, &p2, &player, &enemy, turn);
+
+    // In one turn process idle actions for both players
+    process_turn_player(p1, board);
+    process_turn_player(p2, board);
+
+    // Reset speed of units for player who played turn
+    for (int u = 0; u < player->no_units; u++) {
+        // Get unit of specific type for default data
+        def_unit = unit(-1, -1, -1, player->units[u].type);
+        player->units[u].speed = def_unit.speed;
+        // Reset attacked state
+        player->units[u].attacked = 0;
+    }
 }
 
 // Check result of the game in case of exceeding no. turns
@@ -308,6 +354,7 @@ int main(int argc, char *argv[]) {
     player_num = 1;
     add_unit(&player1, unit(id++, 31, 4, 'K'));
     add_unit(&player1, unit(id++, 30, 2, 'S'));
+    add_unit(&player1, unit(id++, 1, 0, 'W'));
     add_unit(&player2, unit(id++, 2, 3, 'A'));
     prepare_status(&player1, &player2, turn, status_filename);
 
@@ -365,7 +412,7 @@ int main(int argc, char *argv[]) {
 
             // Prepare status file for player
             prepare_status(&player1, &player2, turn, status_filename);
-            // break;
+            break;
         }
     }
 

@@ -23,3 +23,8 @@ src -> Directory containing full source of an apllication
     - By exceeding time limit
     - By base destruction
     - By exceeding turn limit
+- Processing of turn idle actions as building or clearing destroyed units
+    - Building units
+    - Clearing destroyed units
+    - Reseting units
+    - Adding gold (workers in mines)
