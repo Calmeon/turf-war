@@ -3,9 +3,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "game.h"
 #include "map.h"
+
+struct timespec start, stop;
+
+// Measure how much time program has to exceed time limit
+double time_left(float time_limit) {
+    clock_gettime(CLOCK_REALTIME, &stop);
+    double time_passed = (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec) / 1E9;
+    return time_limit - time_passed;
+}
 
 // Set default parameters for player
 void set_player(Player *player) {
@@ -38,7 +48,7 @@ void load_unit(char *tokens[], Player *player, Player *enemy) {
 
     // Check type of unit and create it
     if (type == 'B') {
-        player->base = base(id, x, y, durability, *tokens[6], 0);
+        actual_player->base = base(id, x, y, durability, *tokens[6], 0);
         return;
     }
     u = unit(id, x, y, type);
@@ -80,7 +90,7 @@ void load_status(char *status_filename, Player *player, Player *enemy) {
 }
 
 // Given all data prepare orders.txt file with moves
-void give_orders(char *orders_filename, Player player, Player enemy, Map board) {
+void give_orders(char *orders_filename, Player player, Player enemy, Map board, float time_limit) {
     FILE *file;
     if ((file = fopen(orders_filename, "w")) == NULL) {
         perror("Failed to open orders file");
@@ -91,18 +101,26 @@ void give_orders(char *orders_filename, Player player, Player enemy, Map board) 
     fprintf(file, "%d B A\n", player.base.id);
     // fprintf(file, "%d M %d %d\n",
     //         player.units[0].id, player.units[0].x - 1, player.units[0].y - 1);
-    fprintf(file, "%d A %d\n",
-            player.units[0].id, enemy.units[0].id);
+    // fprintf(file, "%d A %d\n", player.units[0].id, enemy.units[0].id);
+
+    // while (1) {
+    //     if (time_left(time_limit) < 0.01) {
+    //         fclose(file);
+    //         return;
+    //     }
+    // }
 
     fclose(file);
 }
 
 int main(int argc, char *argv[]) {
-    int time_limit;
+    double time_limit;
     char *map_filename, *status_filename, *orders_filename;
     Map board;
     Player player, enemy;
 
+    // Get player start time
+    clock_gettime(CLOCK_REALTIME, &start);
     // Get passed arguments
     if (argc < 4) {
         printf("Usage: ./<program_name> map.txt status.txt orders.txt [time_limit]\n");
@@ -111,19 +129,15 @@ int main(int argc, char *argv[]) {
     map_filename = argv[1];
     status_filename = argv[2];
     orders_filename = argv[3];
-    time_limit = (argc == 5) ? atoi(argv[4]) : 5;
-
-    printf("Map file: %s   Status file: %s   Orders file: %s   Time limit: %d\n",
-           map_filename, status_filename, orders_filename, time_limit);
+    time_limit = (argc == 5) ? atof(argv[4]) : 5;
 
     // Load data
     load_map(&board, map_filename);
-    // print_map(&board);
     set_players(&player, &enemy);
     load_status(status_filename, &player, &enemy);
 
     // Given game data give orders accordingly
-    give_orders(orders_filename, player, enemy, board);
+    give_orders(orders_filename, player, enemy, board, time_limit);
 
     // Free allocated memory
     free_player(&player);
