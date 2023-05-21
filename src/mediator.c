@@ -89,12 +89,12 @@ void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
 }
 
 // Build action
-void build(Player *player, char type) {
+int build(Player *player, char type) {
     Unit u;
     // Already building some unit
     if (player->base.building != '0') {
         printf("Base already building\n");
-        return;
+        return 0;
     }
     // Get specific unit for data
     u = unit(-1, -1, -1, type);
@@ -102,45 +102,46 @@ void build(Player *player, char type) {
     // Check if player has enough gold
     if (player->gold < u.price) {
         printf("Not enough gold\n");
-        return;
+        return 0;
     }
 
     // Set building if everything is ok
     player->base.building = type;
     player->base.building_duration = u.build_time;
     player->gold -= u.price;
+    return 1;
 }
 
 // Move action
-void move(Player *player, Player *enemy, Map board, int id, int x, int y) {
+int move(Player *player, Player *enemy, Map board, int id, int x, int y) {
     Unit *unit = get_unit_by_id(player, id);
     int d = distance(unit->x, unit->y, x, y);
 
     // Check if unit has enough speed
     if (d > unit->speed) {
         printf("Not enough speed points\n");
-        return;
+        return 0;
     }
     // Unit can't go outside the map
     if (x >= board.no_cols || y >= board.no_rows) {
         printf("Can't go outside the map\n");
-        return;
+        return 0;
     }
     // Unit can't go where obstacle is
     if (board.board_matrix[y][x] == '9') {
         printf("Can't go where obstacle is\n");
-        return;
+        return 0;
     }
     // Unit can't go where enemy base is
     if (x == enemy->base.x && y == enemy->base.y) {
         printf("Can't go where enemy base is\n");
-        return;
+        return 0;
     }
     // Unit can't go where enemy is
     for (int u = 0; u < enemy->no_units; u++) {
         if (x == enemy->units[u].x && y == enemy->units[u].y) {
             printf("Can't go where enemy stands\n");
-            return;
+            return 0;
         }
     }
 
@@ -148,10 +149,11 @@ void move(Player *player, Player *enemy, Map board, int id, int x, int y) {
     unit->x = x;
     unit->y = y;
     unit->speed -= d;
+    return 1;
 }
 
 // Attack action
-void attack(Player *player, Player *enemy, int id, int id_enemy) {
+int attack(Player *player, Player *enemy, int id, int id_enemy) {
     Unit *attacked;
     int d, dmg;
     Unit *attacking = get_unit_by_id(player, id);
@@ -159,12 +161,19 @@ void attack(Player *player, Player *enemy, int id, int id_enemy) {
     // Check if speed value is sufficient
     if (attacking->speed < 1) {
         printf("Not enough speed for attack\n");
-        return;
+        return 0;
     }
     // Check if unit already attacked
     if (attacking->attacked != 0) {
         printf("This unit already attacked\n");
-        return;
+        return 0;
+    }
+    // Check if attacked unit isn't ally
+    for (int u = 0; u < player->no_units; u++) {
+        if (player->units[u].id == id_enemy) {
+            printf("Can't attack ally\n");
+            return 0;
+        }
     }
     // Check who is attacked
     if (id_enemy == enemy->base.id) {
@@ -173,7 +182,7 @@ void attack(Player *player, Player *enemy, int id, int id_enemy) {
         d = distance(attacking->x, attacking->y, enemy->base.x, enemy->base.y);
         if (d > attacking->range) {
             printf("Unit not in range\n");
-            return;
+            return 0;
         }
         dmg = get_damage(attacking->type, 'B');
         enemy->base.durability -= dmg;
@@ -184,51 +193,65 @@ void attack(Player *player, Player *enemy, int id, int id_enemy) {
         d = distance(attacking->x, attacking->y, attacked->x, attacked->y);
         if (d > attacking->range) {
             printf("Unit not in range\n");
-            return;
+            return 0;
         }
         dmg = get_damage(attacking->type, attacked->type);
         attacked->durability -= dmg;
     }
     attacking->speed -= 1;
     attacking->attacked = 1;
+    return 1;
 }
 
 // Process single order
-void process_order(Player *player, Player *enemy, Map board, char *tokens[]) {
-    int id, x, y, id_enemy;
+int process_order(Player *player, Player *enemy, Map board, char *tokens[]) {
+    int id, x, y, id_enemy, valid;
     char action, type;
 
     // Parse variables
     id = atoi(tokens[0]);
+    // Check if unit exists
+    if (get_unit_by_id(player, id) == NULL && player->base.id != id) {
+        printf("Unit with given id doesn't exist\n");
+        return 0;
+    }
     action = *tokens[1];
 
+    valid = 1;
     // Choose action type
     switch (action) {
         case 'B':
             type = *tokens[2];
-            build(player, type);
+            valid = build(player, type);
             break;
         case 'M':
             x = atoi(tokens[2]);
             y = atoi(tokens[3]);
-            move(player, enemy, board, id, x, y);
+            valid = move(player, enemy, board, id, x, y);
             break;
         case 'A':
             id_enemy = atoi(tokens[2]);
-            attack(player, enemy, id, id_enemy);
+            // Check if unit exists
+            if (get_unit_by_id(enemy, id_enemy) == NULL && enemy->base.id != id_enemy) {
+                printf("Unit with given id doesn't exist\n");
+                return 0;
+            }
+            valid = attack(player, enemy, id, id_enemy);
             break;
         default:
             printf("Unknown action\n");
+            valid = 0;
             break;
     }
+    return valid;
 }
 
 // Process orders given by player in orders.txt file
-void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_filename) {
+int process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_filename) {
     FILE *file;
     char buffer[128], *token, *tokens[4];
     Player *player, *enemy;
-    int i;
+    int i, valid;
 
     if ((file = fopen(orders_filename, "r")) == NULL) {
         perror("Failed to open status file");
@@ -238,6 +261,7 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
     // Set who is player and enemy
     set_players_roles(&p1, &p2, &player, &enemy, turn);
 
+    valid = 1;
     // Iterate through lines of status file
     while (fgets(buffer, sizeof(buffer), file) != NULL) {
         i = 0;
@@ -247,10 +271,14 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
             tokens[i++] = token;
             token = strtok(NULL, " \n");
         }
-        process_order(player, enemy, board, tokens);
+        valid = process_order(player, enemy, board, tokens);
+        if (!valid) {
+            break;
+        }
     }
 
     fclose(file);
+    return valid;
 }
 
 // Process turn for one player
@@ -329,7 +357,7 @@ int player_won(Player *p1, Player *p2, int turn) {
 }
 
 int main(int argc, char *argv[]) {
-    int status, turn, player_num;
+    int status, turn, player_num, valid;
     char *map_filename, *status_filename, *orders_filename, *time_limit_str, program[strlen(PLAYER_PROGRAM) + 6];
     Map board;
     Player player1, player2;
@@ -393,7 +421,13 @@ int main(int argc, char *argv[]) {
             }
 
             // Process and validate commands
-            process_orders(&player1, &player2, board, turn, orders_filename);
+            valid = process_orders(&player1, &player2, board, turn, orders_filename);
+            // If player did bad move other one wins
+            if (!valid) {
+                printf("Player %d won!\n", (player_num == 1) ? 2 : 1);
+                break;
+            }
+
             // Process automatic turn actions
             process_turn(&player1, &player2, board, turn);
 
@@ -412,7 +446,6 @@ int main(int argc, char *argv[]) {
 
             // Prepare status file for player
             prepare_status(&player1, &player2, turn, status_filename);
-            break;
         }
     }
 

@@ -48,7 +48,7 @@ void load_unit(char *tokens[], Player *player, Player *enemy) {
 
     // Check type of unit and create it
     if (type == 'B') {
-        player->base = base(id, x, y, durability, *tokens[6], 0);
+        actual_player->base = base(id, x, y, durability, *tokens[6], 0);
         return;
     }
     u = unit(id, x, y, type);
@@ -101,8 +101,8 @@ void give_orders(char *orders_filename, Player player, Player enemy, Map board, 
     fprintf(file, "%d B A\n", player.base.id);
     // fprintf(file, "%d M %d %d\n",
     //         player.units[0].id, player.units[0].x - 1, player.units[0].y - 1);
-    fprintf(file, "%d A %d\n",
-            player.units[0].id, enemy.units[0].id);
+    // fprintf(file, "%d A %d\n", player.units[0].id, enemy.units[0].id);
+
     // while (1) {
     //     if (time_left(time_limit) < 0.01) {
     //         fclose(file);
