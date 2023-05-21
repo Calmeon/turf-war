@@ -37,34 +37,11 @@ void load_unit(char *tokens[], Player *player, Player *enemy) {
     durability = atoi(tokens[5]);
 
     // Check type of unit and create it
-    switch (type) {
-        case 'B':
-            player->base = base(id, x, y, durability, *tokens[6]);
-            return;
-        case 'K':
-            u = knight(id, x, y);
-            break;
-        case 'S':
-            u = swordsman(id, x, y);
-            break;
-        case 'A':
-            u = archer(id, x, y);
-            break;
-        case 'P':
-            u = pikeman(id, x, y);
-            break;
-        case 'R':
-            u = ram(id, x, y);
-            break;
-        case 'C':
-            u = catapult(id, x, y);
-            break;
-        case 'W':
-            u = worker(id, x, y);
-            break;
-        default:
-            break;
+    if (type == 'B') {
+        player->base = base(id, x, y, durability, *tokens[6], 0);
+        return;
     }
+    u = unit(id, x, y, type);
 
     // Set durability and add unit
     u.durability = durability;
@@ -112,7 +89,8 @@ void give_orders(char *orders_filename, Player player, Player enemy, Map board) 
 
     // TODO: Using some strategy decide on orders
     fprintf(file, "%d B A\n", player.base.id);
-    fprintf(file, "3 M 29 3\n");
+    fprintf(file, "%d M %d %d\n",
+            player.units[0].id, player.units[0].x + 1, player.units[0].y + 1);
 
     fclose(file);
 }

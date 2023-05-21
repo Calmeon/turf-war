@@ -2,8 +2,10 @@
 
 #include "units.h"
 
-Base base(int id, int x, int y, int durability, char building) {
-    Base b = {.id = id, .x = x, .y = y, .durability = durability, .building = building};
+#include <stdio.h>
+
+Base base(int id, int x, int y, int durability, char building, int building_duration) {
+    Base b = {.id = id, .x = x, .y = y, .durability = durability, .building = building, .building_duration = building_duration};
     return b;
 }
 
@@ -40,4 +42,38 @@ Unit catapult(int id, int x, int y) {
 Unit worker(int id, int x, int y) {
     Unit w = {.id = id, .x = x, .y = y, .type = 'W', .durability = 20, .speed = 2, .price = 100, .range = 1, .build_time = 2};
     return w;
+}
+
+Unit unit(int id, int x, int y, char type) {
+    Unit u;
+
+    // Check type of unit and create it
+    switch (type) {
+        case 'K':
+            u = knight(id, x, y);
+            break;
+        case 'S':
+            u = swordsman(id, x, y);
+            break;
+        case 'A':
+            u = archer(id, x, y);
+            break;
+        case 'P':
+            u = pikeman(id, x, y);
+            break;
+        case 'R':
+            u = ram(id, x, y);
+            break;
+        case 'C':
+            u = catapult(id, x, y);
+            break;
+        case 'W':
+            u = worker(id, x, y);
+            break;
+        default:
+            printf("Unknown type\n");
+            break;
+    }
+
+    return u;
 }

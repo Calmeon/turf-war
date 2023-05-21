@@ -24,7 +24,7 @@ void set_player(Player *player, int base_x, int base_y) {
     player->gold = 2000;
     player->no_units = 0;
     player->units = NULL;
-    player->base = base(id++, base_x, base_y, 200, '0');
+    player->base = base(id++, base_x, base_y, 200, '0', 0);
 }
 
 // Set players structs starting game
@@ -40,27 +40,25 @@ void set_players(Player *p1, Player *p2, Map *board) {
     }
 }
 
+// Based on turn set player and enemy
+void set_players_roles(Player **p1, Player **p2, Player **player, Player **enemy, int turn) {
+    // If turn is odd number then there is p1 turn otherwise p2
+    *player = (turn % 2 != 0) ? *p1 : *p2;
+    *enemy = (turn % 2 != 0) ? *p2 : *p1;
+}
+
 // Prepare status file based on data
 void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
     FILE *file;
     Player *player, *enemy;
+
     if ((file = fopen(filename, "w")) == NULL) {
         perror("Failed to open status file");
         exit(EXIT_FAILURE);
     }
 
-    // Set player and enemy
-    if (turn % 2 != 0) {
-        // Player 1 turn
-        printf("Player 1 turn\n");
-        player = p1;
-        enemy = p2;
-    } else {
-        // Player 2 turn
-        printf("Player 2 turn\n");
-        player = p2;
-        enemy = p1;
-    }
+    // Set who is player and enemy
+    set_players_roles(&p1, &p2, &player, &enemy, turn);
 
     // Gold
     fprintf(file, "%d\n", player->gold);
@@ -89,7 +87,27 @@ void prepare_status(Player *p1, Player *p2, int turn, char *filename) {
 }
 
 // Build action
-void build(Player *player, char type) {}
+void build(Player *player, char type) {
+    Unit u;
+    // Already building some unit
+    if (player->base.building != '0') {
+        printf("Base already building\n");
+        return;
+    }
+    // Get specific unit for data
+    u = unit(-1, -1, -1, type);
+
+    // Check if player has enough gold
+    if (player->gold < u.price) {
+        printf("Not enough gold\n");
+        return;
+    }
+
+    // Set building if everything is ok
+    player->base.building = type;
+    player->base.building_duration = u.build_time;
+    player->gold -= u.price;
+}
 
 // Move action
 void move(Player *player, Player *enemy, Map board, int id, int x, int y) {}
@@ -106,6 +124,7 @@ void process_order(Player *player, Player *enemy, Map board, char *tokens[]) {
     id = atoi(tokens[0]);
     action = *tokens[1];
 
+    // Choose action type
     switch (action) {
         case 'B':
             type = *tokens[2];
@@ -121,6 +140,7 @@ void process_order(Player *player, Player *enemy, Map board, char *tokens[]) {
             attack(player, enemy, id, id_enemy);
             break;
         default:
+            printf("Unknown action\n");
             break;
     }
 }
@@ -137,9 +157,8 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
         exit(EXIT_FAILURE);
     }
 
-    // Set player and enemy
-    player = (turn % 2 != 0) ? p1 : p2;
-    enemy = (turn % 2 != 0) ? p2 : p1;
+    // Set who is player and enemy
+    set_players_roles(&p1, &p2, &player, &enemy, turn);
 
     // Iterate through lines of status file
     while (fgets(buffer, sizeof(buffer), file) != NULL) {
@@ -155,6 +174,9 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
 
     fclose(file);
 }
+
+// Process turn changes as building or gold mining
+void process_turn(Player *player1, Player *player2, Map board, int turn) {}
 
 int main(int argc, char *argv[]) {
     int status, running, turn;
@@ -218,7 +240,7 @@ int main(int argc, char *argv[]) {
              * Check ending conditions
              */
             process_orders(&player1, &player2, board, turn, orders_filename);
-
+            process_turn(&player1, &player2, board, turn);
             // Prepare status file for player
             // prepare_status(&player1, &player2, ++turn, status_filename);
 
