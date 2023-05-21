@@ -90,7 +90,7 @@ void give_orders(char *orders_filename, Player player, Player enemy, Map board) 
     // TODO: Using some strategy decide on orders
     fprintf(file, "%d B A\n", player.base.id);
     fprintf(file, "%d M %d %d\n",
-            player.units[0].id, player.units[0].x + 1, player.units[0].y + 1);
+            player.units[0].id, player.units[0].x - 1, player.units[0].y - 1);
 
     fclose(file);
 }

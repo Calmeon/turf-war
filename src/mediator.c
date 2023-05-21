@@ -110,7 +110,43 @@ void build(Player *player, char type) {
 }
 
 // Move action
-void move(Player *player, Player *enemy, Map board, int id, int x, int y) {}
+void move(Player *player, Player *enemy, Map board, int id, int x, int y) {
+    Unit *unit = getUnitById(player, id);
+    int d = distance(unit->x, unit->y, x, y);
+
+    // Check if unit has enough speed
+    if (d > unit->speed) {
+        printf("Not enough speed points\n");
+        return;
+    }
+    // Unit can't go outside the map
+    if (x >= board.no_cols || y >= board.no_rows) {
+        printf("Can't go outside the map\n");
+        return;
+    }
+    // Unit can't go where obstacle is
+    if (board.board_matrix[y][x] == '9') {
+        printf("Can't go where obstacle is\n");
+        return;
+    }
+    // Unit can't go where enemy base is
+    if (x == enemy->base.x && y == enemy->base.y) {
+        printf("Can't go where enemy base is\n");
+        return;
+    }
+    // Unit can't go where enemy is
+    for (int u = 0; u < enemy->no_units; u++) {
+        if (x == enemy->units[u].x && y == enemy->units[u].y) {
+            printf("Can't go where enemy stands\n");
+            return;
+        }
+    }
+
+    // All conditions are passed so place unit where it should be
+    unit->x = x;
+    unit->y = y;
+    unit->speed -= d;
+}
 
 // Attack action
 void attack(Player *player, Player *enemy, int id, int id_enemy) {}
@@ -175,8 +211,15 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
     fclose(file);
 }
 
-// Process turn changes as building or gold mining
-void process_turn(Player *player1, Player *player2, Map board, int turn) {}
+// Process turn changes sucha as building or gold mining
+void process_turn(Player *player1, Player *player2, Map board, int turn) {
+    /* 
+     * TODO:
+     * Build units/substract time of builidng
+     * Add gold if workers on mines
+     * Reset speed of units 
+     */
+}
 
 int main(int argc, char *argv[]) {
     int status, running, turn;
@@ -202,9 +245,9 @@ int main(int argc, char *argv[]) {
     load_map(&board, map_filename);
     set_players(&player1, &player2, &board);
     turn = 1;
-    add_unit(&player1, knight(id++, 31, 4));
-    add_unit(&player1, swordsman(id++, 30, 2));
-    add_unit(&player2, archer(id++, 2, 3));
+    add_unit(&player1, unit(id++, 31, 4, 'K'));
+    add_unit(&player1, unit(id++, 30, 2, 'S'));
+    add_unit(&player2, unit(id++, 2, 3, 'A'));
     prepare_status(&player1, &player2, turn, status_filename);
 
     // Prepare for executing player program
@@ -236,9 +279,9 @@ int main(int argc, char *argv[]) {
             /*
              * TODO:
              * Check if in time limit
-             * Process and validate commands
              * Check ending conditions
              */
+            // Process and validate commands
             process_orders(&player1, &player2, board, turn, orders_filename);
             process_turn(&player1, &player2, board, turn);
             // Prepare status file for player

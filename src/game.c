@@ -21,3 +21,18 @@ void free_player(Player *p) {
         free(p->units);
     }
 }
+
+// Calculate distance beetwen two points
+int distance(int x1, int y1, int x2, int y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
+// Return unit with given id
+Unit *getUnitById(Player *player, int id) {
+    for (int i = 0; i < player->no_units; i++) {
+        if (player->units[i].id == id) {
+            return &(player->units[i]);
+        }
+    }
+    return NULL;
+}
