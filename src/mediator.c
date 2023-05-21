@@ -190,6 +190,7 @@ void attack(Player *player, Player *enemy, int id, int id_enemy) {
         attacked->durability -= dmg;
     }
     attacking->speed -= 1;
+    attacking->attacked = 1;
 }
 
 // Process single order
@@ -262,8 +263,15 @@ void process_turn(Player *player1, Player *player2, Map board, int turn) {
      */
 }
 
-// Check result of the game
-void end_game() {
+// Check result of the game in case of exceeding no. turns
+void end_game(Player *p1, Player *p2) {
+    if (p1->no_units > p2->no_units) {
+        printf("Player 1 won with %d more unit(s)!\n", p1->no_units - p2->no_units);
+    } else if (p2->no_units > p1->no_units) {
+        printf("Player 2 won with %d more unit(s)!\n", p2->no_units - p1->no_units);
+    } else {
+        printf("Tie!");
+    }
 }
 
 // Check if enemy base is destroyed
@@ -351,13 +359,13 @@ int main(int argc, char *argv[]) {
             ++turn;
             if (turn > MAX_TURNS) {
                 // Game has ended so check result
-                end_game();
+                end_game(&player1, &player2);
                 break;
             }
 
             // Prepare status file for player
             prepare_status(&player1, &player2, turn, status_filename);
-            break;
+            // break;
         }
     }
 

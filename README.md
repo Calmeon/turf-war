@@ -22,3 +22,4 @@ src -> Directory containing full source of an apllication
 - Handle game ending
     - By exceeding time limit
     - By base destruction
+    - By exceeding turn limit
