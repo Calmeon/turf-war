@@ -111,7 +111,7 @@ void build(Player *player, char type) {
 
 // Move action
 void move(Player *player, Player *enemy, Map board, int id, int x, int y) {
-    Unit *unit = getUnitById(player, id);
+    Unit *unit = get_unit_by_id(player, id);
     int d = distance(unit->x, unit->y, x, y);
 
     // Check if unit has enough speed
@@ -149,7 +149,46 @@ void move(Player *player, Player *enemy, Map board, int id, int x, int y) {
 }
 
 // Attack action
-void attack(Player *player, Player *enemy, int id, int id_enemy) {}
+void attack(Player *player, Player *enemy, int id, int id_enemy) {
+    Unit *attacked;
+    int d, dmg;
+    Unit *attacking = get_unit_by_id(player, id);
+
+    // Check if speed value is sufficient
+    if (attacking->speed < 1) {
+        printf("Not enough speed for attack\n");
+        return;
+    }
+    // Check if unit already attacked
+    if (attacking->attacked != 0) {
+        printf("This unit already attacked\n");
+        return;
+    }
+    // Check who is attacked
+    if (id_enemy == enemy->base.id) {
+        // Enemy base is attacked
+        // Check if unit has sufficient range
+        d = distance(attacking->x, attacking->y, enemy->base.x, enemy->base.y);
+        if (d > attacking->range) {
+            printf("Unit not in range\n");
+            return;
+        }
+        dmg = get_damage(attacking->type, 'B');
+        enemy->base.durability -= dmg;
+    } else {
+        // Enemy unit is attacked
+        attacked = get_unit_by_id(enemy, id_enemy);
+        // Check if unit has sufficient range
+        d = distance(attacking->x, attacking->y, attacked->x, attacked->y);
+        if (d > attacking->range) {
+            printf("Unit not in range\n");
+            return;
+        }
+        dmg = get_damage(attacking->type, attacked->type);
+        attacked->durability -= dmg;
+    }
+    attacking->speed -= 1;
+}
 
 // Process single order
 void process_order(Player *player, Player *enemy, Map board, char *tokens[]) {
@@ -213,11 +252,11 @@ void process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fi
 
 // Process turn changes sucha as building or gold mining
 void process_turn(Player *player1, Player *player2, Map board, int turn) {
-    /* 
+    /*
      * TODO:
      * Build units/substract time of builidng
      * Add gold if workers on mines
-     * Reset speed of units 
+     * Reset speed of units
      */
 }
 
@@ -283,9 +322,10 @@ int main(int argc, char *argv[]) {
              */
             // Process and validate commands
             process_orders(&player1, &player2, board, turn, orders_filename);
+            // Process automatic turn actions
             process_turn(&player1, &player2, board, turn);
             // Prepare status file for player
-            // prepare_status(&player1, &player2, ++turn, status_filename);
+            prepare_status(&player1, &player2, ++turn, status_filename);
 
             running = 0;
         }

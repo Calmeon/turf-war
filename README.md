@@ -18,3 +18,4 @@ src -> Directory containing full source of an apllication
 - Handle orders
     - Build
     - Move
+    - Attack
