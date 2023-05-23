@@ -380,10 +380,6 @@ int main(int argc, char *argv[]) {
     set_players(&player1, &player2, &board);
     turn = 1;
     player_num = 1;
-    // add_unit(&player1, unit(id++, 31, 4, 'K'));
-    // add_unit(&player1, unit(id++, 30, 2, 'S'));
-    // add_unit(&player1, unit(id++, 1, 0, 'W'));
-    // add_unit(&player2, unit(id++, 2, 3, 'A'));
     prepare_status(&player1, &player2, turn, status_filename);
 
     // Prepare for executing player program
@@ -415,7 +411,6 @@ int main(int argc, char *argv[]) {
             player_num = (turn % 2 != 0) ? 1 : 2;
             // Calculate the time taken by player
             time_taken = (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec) / 1E9;
-            printf("Time taken: %f\n", time_taken);
             if (time_taken > atof(time_limit_str)) {
                 printf("Time limit exceeded.\nPlayer %d won!\n", (player_num == 1) ? 2 : 1);
                 break;
@@ -447,6 +442,7 @@ int main(int argc, char *argv[]) {
 
             // Prepare status file for player
             prepare_status(&player1, &player2, turn, status_filename);
+            // break;
         }
     }
 

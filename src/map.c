@@ -50,11 +50,11 @@ void load_map(Map *board, char *filename) {
 }
 
 // Prints 2D matrix representing map
-void print_map(Map *board) {
+void print_map(Map board) {
     printf("-----Map-----\n");
-    printf("Number of rows: %d   Number of columns: %d\n", board->no_rows, board->no_cols);
-    for (int i = 0; i < board->no_rows; i++) {
-        printf("%s\n", board->board_matrix[i]);
+    printf("Number of rows: %d   Number of columns: %d\n", board.no_rows, board.no_cols);
+    for (int i = 0; i < board.no_rows; i++) {
+        printf("%s\n", board.board_matrix[i]);
     }
 }
 
@@ -64,4 +64,16 @@ void free_map(Map *board) {
         free(board->board_matrix[i]);
     }
     free(board->board_matrix);
+}
+
+// Check if there are mines on map
+int have_mines(Map board) {
+    for (int r = 0; r < board.no_rows; r++) {
+        for (int c = 0; c < board.no_cols; c++) {
+            if (board.board_matrix[r][c] == '6') {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }

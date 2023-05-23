@@ -5,6 +5,7 @@ PLAYER = player
 MAP = map
 GAME = game
 UNITS = units
+STRATEGY = strategy
 
 MAP_FILENAME = map.txt
 STATUS_FILENAME = status.txt
@@ -19,7 +20,7 @@ $(MEDIATOR).out: $(MEDIATOR).o $(MAP).o $(GAME).o $(UNITS).o
 $(MEDIATOR).o: $(MEDIATOR).c 
 	$(CC) $(FLAGS) -c $^ -o $@
 
-$(PLAYER).out: $(PLAYER).o $(MAP).o $(GAME).o $(UNITS).o
+$(PLAYER).out: $(PLAYER).o $(MAP).o $(GAME).o $(UNITS).o $(STRATEGY).o
 	$(CC) $(FLAGS) $^ -o $@
 
 $(PLAYER).o: $(PLAYER).c
@@ -32,6 +33,9 @@ $(GAME).o: $(GAME).c
 	$(CC) $(FLAGS) -c $^ -o $@
 
 $(UNITS).o: $(UNITS).c
+	$(CC) $(FLAGS) -c $^ -o $@
+
+$(STRATEGY).o: $(STRATEGY).c
 	$(CC) $(FLAGS) -c $^ -o $@
 
 test: $(MEDIATOR).out $(PLAYER).out

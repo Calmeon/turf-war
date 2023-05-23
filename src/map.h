@@ -10,7 +10,8 @@ typedef struct {
 } Map;
 
 void load_map(Map *board, char *filename);
-void print_map(Map *board);
+void print_map(Map board);
 void free_map(Map *board);
+int have_mines(Map board);
 
 #endif

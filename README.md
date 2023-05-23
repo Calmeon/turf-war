@@ -29,3 +29,5 @@ src -> Directory containing full source of an apllication
     - Reseting units
     - Adding gold (workers in mines)
 - Full moves validation (bad move results in win for another player)
+- Strategies:
+    - Build strategy

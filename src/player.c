@@ -9,6 +9,7 @@
 
 #include "game.h"
 #include "map.h"
+#include "strategy.h"
 
 // Struct to store allocated resources in order to free them
 typedef struct {
@@ -103,23 +104,8 @@ void load_status(char *status_filename, Player *player, Player *enemy) {
     fclose(file);
 }
 
-// Pass build order to orders file
-void build_order(FILE *file, int id, char type) {
-    fprintf(file, "%d B %c\n", id, type);
-}
-
-// Pass move order to orders file
-void move_order(FILE *file, int id, int x, int y) {
-    fprintf(file, "%d M %d %d\n", id, x, y);
-}
-
-// Pass attack order to orders file
-void attack_order(FILE *file, int id, int enemy_id) {
-    fprintf(file, "%d A %d\n", id, enemy_id);
-}
-
 // Given all data prepare orders.txt file with moves
-void give_orders(char *orders_filename, Player player, Player enemy, Map board, float time_limit) {
+void give_orders(char *orders_filename, Player *player, Player *enemy, Map board, float time_limit) {
     FILE *file;
     if ((file = fopen(orders_filename, "w")) == NULL) {
         perror("Failed to open orders file");
@@ -127,9 +113,10 @@ void give_orders(char *orders_filename, Player player, Player enemy, Map board, 
     }
     global_resources.file = file;
 
-    build_order(file, player.base.id, 'W');
-
     // TODO: Using some strategy decide on orders
+    build_strategy(file, player, board);
+    attack_strategy(file, player, enemy, board);
+    move_strategy(file, player, enemy, board);
 
     fclose(file);
 }
@@ -141,6 +128,8 @@ int main(int argc, char *argv[]) {
     Player player, enemy;
     struct itimerval timer;
 
+    // Set a seed for the random number generator
+    srand(getpid());
     // Install signal handler for alarm signal
     signal(SIGALRM, handle_timeout);
 
@@ -173,7 +162,7 @@ int main(int argc, char *argv[]) {
     global_resources.board = &board;
 
     // Given game data give orders accordingly
-    give_orders(orders_filename, player, enemy, board, time_limit);
+    give_orders(orders_filename, &player, &enemy, board, time_limit);
 
     // Cancel the timer if executed in time
     setitimer(ITIMER_REAL, NULL, NULL);
