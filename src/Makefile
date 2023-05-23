@@ -9,7 +9,7 @@ UNITS = units
 MAP_FILENAME = map.txt
 STATUS_FILENAME = status.txt
 ORDERS_FILENAME = orders.txt
-TIME_LIMIT = 5
+TIME_LIMIT = 1
 
 build: $(MEDIATOR).out $(PLAYER).out
 
