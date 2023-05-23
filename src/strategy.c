@@ -64,7 +64,37 @@ void build_strategy(FILE *file, Player *player, Map board) {
 }
 
 // Apply attack strategy
-void attack_strategy(FILE *file, Player *player, Player *enemy, Map board) {}
+void attack_strategy(FILE *file, Player *player, Player *enemy, Map board) {
+    Unit *p_unit, *e_unit;
+    int d;
+    for (int u = 0; u < player->no_units; u++) {
+        p_unit = &(player->units[u]);
+        if (p_unit->attacked != 0) {
+            // Prioritize enemy base over units
+            d = distance(p_unit->x, p_unit->y, enemy->base.x, enemy->base.y);
+            if (d <= p_unit->range) {
+                attack_order(file, p_unit->id, enemy->base.id);
+                p_unit->attacked = 1;
+                p_unit->speed--;
+            } else {
+                // Check if some unit in range and attack it
+                for (int eu = 0; eu < enemy->no_units; eu++) {
+                    e_unit = &(enemy->units[eu]);
+                    d = distance(p_unit->x, p_unit->y, e_unit->x, e_unit->y);
+
+                    if (d <= p_unit->range && e_unit->durability > 0) {
+                        attack_order(file, p_unit->id, e_unit->id);
+                        e_unit->durability -= get_damage(p_unit->type, e_unit->type);
+                        p_unit->attacked = 1;
+                        p_unit->speed--;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
 
 // Apply move strategy
-void move_strategy(FILE *file, Player *player, Player *enemy, Map board) {}
+void move_strategy(FILE *file, Player *player, Player *enemy, Map board) {
+}

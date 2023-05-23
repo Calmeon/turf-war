@@ -12,6 +12,7 @@ STATUS_FILENAME = status.txt
 ORDERS_FILENAME = orders.txt
 TIME_LIMIT = 1
 
+# Build mediator and player program with all dependencies
 build: $(MEDIATOR).out $(PLAYER).out
 
 $(MEDIATOR).out: $(MEDIATOR).o $(MAP).o $(GAME).o $(UNITS).o
@@ -38,15 +39,19 @@ $(UNITS).o: $(UNITS).c
 $(STRATEGY).o: $(STRATEGY).c
 	$(CC) $(FLAGS) -c $^ -o $@
 
-test: $(MEDIATOR).out $(PLAYER).out
+# Run game(mediator)
+play: $(MEDIATOR).out $(PLAYER).out
 	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(ORDERS_FILENAME) $(TIME_LIMIT)
 
+# Run player program
 player: $(PLAYER).out
 	./$(PLAYER).out $(MAP_FILENAME) $(STATUS_FILENAME) $(ORDERS_FILENAME) $(TIME_LIMIT)
 
+# Run game with valgrind
 memcheck: $(MEDIATOR).out
 	valgrind --leak-check=yes --track-origins=yes \
 	./$(MEDIATOR).out $(MAP_FILENAME) $(STATUS_FILENAME) $(ORDERS_FILENAME) $(TIME_LIMIT)
 
+# Delete files generated in process
 clean:
 	rm -f *.o  *.out $(STATUS_FILENAME) $(ORDERS_FILENAME)
