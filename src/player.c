@@ -113,10 +113,12 @@ void give_orders(char *orders_filename, Player *player, Player *enemy, Map board
     }
     global_resources.file = file;
 
-    // TODO: Using some strategy decide on orders
+    // Using specific strategy decide on orders
     build_strategy(file, player, board);
-    attack_strategy(file, player, enemy, board);
+    attack_strategy(file, player, enemy);
     move_strategy(file, player, enemy, board);
+    // Attack once more when units are in diffrent positions
+    attack_strategy(file, player, enemy);
 
     fclose(file);
 }

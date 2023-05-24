@@ -23,7 +23,11 @@ int id = 0;
 
 // Set default parameters for player and set position of the base
 void set_player(Player *player, int base_x, int base_y) {
+    // if (base_x != 0) {
     player->gold = 2000;
+    // } else {
+    //     player->gold = 100;
+    // }
     player->no_units = 0;
     player->units = NULL;
     player->base = base(id++, base_x, base_y, 200, '0', 0);
@@ -119,7 +123,7 @@ int move(Player *player, Player *enemy, Map board, int id, int x, int y) {
 
     // Check if unit has enough speed
     if (d > unit->speed) {
-        printf("Not enough speed points\n");
+        printf("Not enough speed points for move\n");
         return 0;
     }
     // Unit can't go outside the map
@@ -197,6 +201,9 @@ int attack(Player *player, Player *enemy, int id, int id_enemy) {
         }
         dmg = get_damage(attacking->type, attacked->type);
         attacked->durability -= dmg;
+        // Delete killed unit
+        if (attacked->durability <= 0)
+            del_unit(enemy, id_enemy);
     }
     attacking->speed -= 1;
     attacking->attacked = 1;
@@ -283,7 +290,6 @@ int process_orders(Player *p1, Player *p2, Map board, int turn, char *orders_fil
 
 // Process turn for one player
 void process_turn_player(Player *p, Map board) {
-    int u;
     // Build units
     if (p->base.building != '0') {
         // Lower time of builidng
@@ -292,15 +298,6 @@ void process_turn_player(Player *p, Map board) {
             // Build unit on base if time passed
             add_unit(p, unit(id++, p->base.x, p->base.y, p->base.building));
             p->base.building = '0';
-        }
-    }
-    // Clear destroyed units
-    u = 0;
-    while (u < p->no_units) {
-        if (p->units[u].durability < 0) {
-            del_unit(p, u);
-        } else {
-            u++;
         }
     }
     // Add gold if workers on mines
@@ -380,6 +377,7 @@ int main(int argc, char *argv[]) {
     set_players(&player1, &player2, &board);
     turn = 1;
     player_num = 1;
+    // add_unit(&player1, unit(id++, 30, 0, 'W'));
     prepare_status(&player1, &player2, turn, status_filename);
 
     // Prepare for executing player program
@@ -412,7 +410,7 @@ int main(int argc, char *argv[]) {
             // Calculate the time taken by player
             time_taken = (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec) / 1E9;
             if (time_taken > atof(time_limit_str)) {
-                printf("Time limit exceeded.\nPlayer %d won!\n", (player_num == 1) ? 2 : 1);
+                printf("Time limit exceeded.\nPlayer %d won!\n Turn: %d\n", (player_num == 1) ? 2 : 1, turn);
                 break;
             }
 
@@ -420,7 +418,7 @@ int main(int argc, char *argv[]) {
             valid = process_orders(&player1, &player2, board, turn, orders_filename);
             // If player did bad move other one wins
             if (!valid) {
-                printf("Player %d won!\n", (player_num == 1) ? 2 : 1);
+                printf("Player %d won!\nTurn: %d\n", (player_num == 1) ? 2 : 1, turn);
                 break;
             }
 
@@ -429,7 +427,9 @@ int main(int argc, char *argv[]) {
 
             // Check if player destroyed enemy base
             if (player_won(&player1, &player2, turn)) {
-                printf("Player %d won by destroying enemy base!\n", player_num);
+                // Prepare status to check how game ended
+                prepare_status(&player1, &player2, turn, status_filename);
+                printf("Player %d won by destroying enemy base!\nTurn: %d\n", player_num, turn);
                 break;
             }
             // Check if turns limit is exceeded
