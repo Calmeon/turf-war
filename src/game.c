@@ -17,10 +17,13 @@ void add_unit(Player *p, Unit u) {
 }
 
 // Delete unit from player units with proper memory reallocation
-void del_unit(Player *p, int idx) {
-    if (idx < 0 || idx >= p->no_units) {
-        printf("Invalid unit index.\n");
-        return;
+void del_unit(Player *p, int id) {
+    int idx;
+    for (int i = 0; i < p->no_units; i++) {
+        if (p->units[i].id == id) {
+            idx = i;
+            break;
+        }
     }
 
     // Shift units after the deleted unit to fill the gap

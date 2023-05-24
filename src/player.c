@@ -1,20 +1,33 @@
 // Player program representing game player
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include "game.h"
 #include "map.h"
+#include "strategy.h"
 
-struct timespec start, stop;
+// Struct to store allocated resources in order to free them
+typedef struct {
+    Player *player, *enemy;
+    Map *board;
+    FILE *file;
+} Resources;
+Resources global_resources = {.player = NULL, .enemy = NULL, .board = NULL, .file = NULL};
 
-// Measure how much time program has to exceed time limit
-double time_left(float time_limit) {
-    clock_gettime(CLOCK_REALTIME, &stop);
-    double time_passed = (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec) / 1E9;
-    return time_limit - time_passed;
+// Handle timeout: clear resources
+void handle_timeout(int signum) {
+    free_player(global_resources.player);
+    free_player(global_resources.enemy);
+    free_map(global_resources.board);
+    if (global_resources.file != NULL) {
+        fclose(global_resources.file);
+    }
+    exit(0);
 }
 
 // Set default parameters for player
@@ -68,6 +81,7 @@ void load_status(char *status_filename, Player *player, Player *enemy) {
         perror("Failed to open status file");
         exit(EXIT_FAILURE);
     }
+    global_resources.file = file;
 
     // Get gold
     fgets(buffer, sizeof(buffer), file);
@@ -90,25 +104,20 @@ void load_status(char *status_filename, Player *player, Player *enemy) {
 }
 
 // Given all data prepare orders.txt file with moves
-void give_orders(char *orders_filename, Player player, Player enemy, Map board, float time_limit) {
+void give_orders(char *orders_filename, Player *player, Player *enemy, Map board, float time_limit) {
     FILE *file;
     if ((file = fopen(orders_filename, "w")) == NULL) {
         perror("Failed to open orders file");
         exit(EXIT_FAILURE);
     }
+    global_resources.file = file;
 
-    // TODO: Using some strategy decide on orders
-    fprintf(file, "%d B A\n", player.base.id);
-    // fprintf(file, "%d M %d %d\n",
-    //         player.units[0].id, player.units[0].x - 1, player.units[0].y - 1);
-    // fprintf(file, "%d A %d\n", player.units[0].id, enemy.units[0].id);
-
-    // while (1) {
-    //     if (time_left(time_limit) < 0.01) {
-    //         fclose(file);
-    //         return;
-    //     }
-    // }
+    // Using specific strategy decide on orders
+    build_strategy(file, player, board);
+    attack_strategy(file, player, enemy);
+    move_strategy(file, player, enemy, board);
+    // Attack once more when units are in diffrent positions
+    attack_strategy(file, player, enemy);
 
     fclose(file);
 }
@@ -118,9 +127,13 @@ int main(int argc, char *argv[]) {
     char *map_filename, *status_filename, *orders_filename;
     Map board;
     Player player, enemy;
+    struct itimerval timer;
 
-    // Get player start time
-    clock_gettime(CLOCK_REALTIME, &start);
+    // Set a seed for the random number generator
+    srand(getpid());
+    // Install signal handler for alarm signal
+    signal(SIGALRM, handle_timeout);
+
     // Get passed arguments
     if (argc < 4) {
         printf("Usage: ./<program_name> map.txt status.txt orders.txt [time_limit]\n");
@@ -131,14 +144,29 @@ int main(int argc, char *argv[]) {
     orders_filename = argv[3];
     time_limit = (argc == 5) ? atof(argv[4]) : 5;
 
+    // Set up the timer
+    // Set time_limit - 0.01 ex. time_limit=5 sets timer for 4.99s
+    // 0.01s is safe limit for program cleanup
+    timer.it_value.tv_sec = time_limit - 1;
+    timer.it_value.tv_usec = 99 * 1E4;
+    timer.it_interval.tv_sec = 0;
+    timer.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &timer, NULL);
+
     // Load data
     load_map(&board, map_filename);
     set_players(&player, &enemy);
     load_status(status_filename, &player, &enemy);
+    // Pass allocated resources to global to clear them at timeout
+    global_resources.player = &player;
+    global_resources.enemy = &enemy;
+    global_resources.board = &board;
 
     // Given game data give orders accordingly
-    give_orders(orders_filename, player, enemy, board, time_limit);
+    give_orders(orders_filename, &player, &enemy, board, time_limit);
 
+    // Cancel the timer if executed in time
+    setitimer(ITIMER_REAL, NULL, NULL);
     // Free allocated memory
     free_player(&player);
     free_player(&enemy);
