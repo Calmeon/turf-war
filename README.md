@@ -32,4 +32,4 @@ src -> Directory containing full source of an apllication
 - Strategies:
     - Build
     - Attack
-    - Move (Target base)
+    - Move (Target base or mines)

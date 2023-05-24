@@ -44,6 +44,7 @@ Unit worker() {
     return w;
 }
 
+// Unit constructor which returns type of specified unit
 Unit unit(int id, int x, int y, char type) {
     Unit u;
 

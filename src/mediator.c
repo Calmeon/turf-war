@@ -23,11 +23,7 @@ int id = 0;
 
 // Set default parameters for player and set position of the base
 void set_player(Player *player, int base_x, int base_y) {
-    // if (base_x != 0) {
     player->gold = 2000;
-    // } else {
-    //     player->gold = 100;
-    // }
     player->no_units = 0;
     player->units = NULL;
     player->base = base(id++, base_x, base_y, 200, '0', 0);
@@ -377,7 +373,6 @@ int main(int argc, char *argv[]) {
     set_players(&player1, &player2, &board);
     turn = 1;
     player_num = 1;
-    // add_unit(&player1, unit(id++, 30, 0, 'W'));
     prepare_status(&player1, &player2, turn, status_filename);
 
     // Prepare for executing player program
@@ -442,7 +437,6 @@ int main(int argc, char *argv[]) {
 
             // Prepare status file for player
             prepare_status(&player1, &player2, turn, status_filename);
-            // break;
         }
     }
 

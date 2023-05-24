@@ -15,6 +15,9 @@ void attack_order(FILE *file, int id, int enemy_id);
 int enemy_in_range(Unit unit, Player enemy);
 int enemy_on_xy(Player enemy, int x, int y);
 
+void move_target_base(FILE *file, Unit *p_unit, Player *enemy, Map board);
+void move_target_mine(FILE *file, Unit *p_unit, Player *enemy, Map board);
+
 void build_strategy(FILE *file, Player *player, Map board);
 void attack_strategy(FILE *file, Player *player, Player *enemy);
 void move_strategy(FILE *file, Player *player, Player *enemy, Map board);

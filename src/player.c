@@ -21,7 +21,6 @@ Resources global_resources = {.player = NULL, .enemy = NULL, .board = NULL, .fil
 
 // Handle timeout: clear resources
 void handle_timeout(int signum) {
-    printf("Program timed out\n");
     free_player(global_resources.player);
     free_player(global_resources.enemy);
     free_map(global_resources.board);
